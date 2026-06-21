@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Éduquer Vos Cœurs — Portail Interne</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <!-- Firebase v10 compat (CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+</head>
+<body>
+
+<!-- ============================
+     LOGIN PAGE
+     ============================ -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon"><i data-lucide="heart"></i></div>
+      <h1>Éduquer Vos Cœurs</h1>
+      <p>Portail Interne — Membres & Bénévoles</p>
+    </div>
+
+    <div class="login-welcome">
+      Association Humanitaire Internationale<br>
+      Burkina Faso · Côte d'Ivoire · Niger
+    </div>
+
+    <!-- CONNEXION -->
+    <div id="login-form-wrap">
+      <form id="login-form">
+        <div class="form-group">
+          <label>Adresse e-mail</label>
+          <div class="input-wrap">
+            <span class="input-icon"><i data-lucide="mail"></i></span>
+            <input type="email" id="login-email" placeholder="votre@email.com" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <div class="input-wrap">
+            <span class="input-icon"><i data-lucide="lock"></i></span>
+            <input type="password" id="login-password" placeholder="••••••••" required>
+          </div>
+        </div>
+        <div style="text-align:right;margin-bottom:16px">
+          <button type="button" id="forgot-password" style="background:none;border:none;color:var(--secondary);font-size:13px;cursor:pointer;font-family:inherit">Mot de passe oublié ?</button>
+        </div>
+        <button type="submit" id="login-btn" class="btn btn-primary">
+          Se connecter →
+        </button>
+      </form>
+      <p style="text-align:center;font-size:13px;color:var(--text-muted);margin-top:20px">
+        Pas encore de compte ?
+        <button id="show-register" style="background:none;border:none;color:var(--secondary);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">Créer un compte</button>
+      </p>
+    </div>
+
+    <!-- INSCRIPTION -->
+    <div id="register-form-wrap" style="display:none">
+      <form id="register-form">
+        <div class="form-group">
+          <label>Nom complet</label>
+          <div class="input-wrap">
+            <span class="input-icon"><i data-lucide="user"></i></span>
+            <input type="text" id="register-name" placeholder="Prénom Nom" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Adresse e-mail</label>
+          <div class="input-wrap">
+            <span class="input-icon"><i data-lucide="mail"></i></span>
+            <input type="email" id="register-email" placeholder="votre@email.com" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <div class="input-wrap">
+            <span class="input-icon"><i data-lucide="lock"></i></span>
+            <input type="password" id="register-password" placeholder="Min. 6 caractères" required minlength="6">
+          </div>
+        </div>
+        <button type="submit" id="register-btn" class="btn btn-primary">
+          Créer mon compte →
+        </button>
+      </form>
+      <p style="text-align:center;font-size:13px;color:var(--text-muted);margin-top:20px">
+        Déjà un compte ?
+        <button id="show-login" style="background:none;border:none;color:var(--secondary);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">Se connecter</button>
+      </p>
+    </div>
+
+    <p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:20px">
+      © 2026 Éduquer Vos Cœurs — Usage interne confidentiel
+    </p>
+  </div>
+</div>
+
+<!-- ============================
+     MAIN APP
+     ============================ -->
+<div id="app" style="display:none">
+
+  <!-- Sidebar overlay (mobile) -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark"><i data-lucide="heart"></i></div>
+      <div class="logo-text">
+        <h2>Éduquer Vos Cœurs</h2>
+        <span>Portail Interne</span>
+      </div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="avatar" id="sidebar-avatar">EV</div>
+      <div class="user-info">
+        <div class="name" id="sidebar-name">Chargement…</div>
+        <div class="role-badge" id="sidebar-role">Membre</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+
+      <div class="nav-item active" data-page="dashboard">
+        <span class="nav-icon"><i data-lucide="home"></i></span>
+        Tableau de bord
+      </div>
+      <div class="nav-item" data-page="planning">
+        <span class="nav-icon"><i data-lucide="calendar"></i></span>
+        Planning
+      </div>
+      <div class="nav-item" data-page="events">
+        <span class="nav-icon"><i data-lucide="ticket"></i></span>
+        Événements
+        <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item" data-page="news">
+        <span class="nav-icon"><i data-lucide="newspaper"></i></span>
+        Actualités
+        <span class="nav-badge">6</span>
+      </div>
+
+      <div class="nav-section-label">Mon Espace</div>
+
+      <div class="nav-item" data-page="sections">
+        <span class="nav-icon"><i data-lucide="layout-grid"></i></span>
+        Mes Sections
+      </div>
+      <div class="nav-item" data-page="documents">
+        <span class="nav-icon"><i data-lucide="folder"></i></span>
+        Médiathèque
+      </div>
+      <div class="nav-item" data-page="members">
+        <span class="nav-icon"><i data-lucide="users"></i></span>
+        Annuaire
+      </div>
+      <div class="nav-item" data-page="profile">
+        <span class="nav-icon"><i data-lucide="user"></i></span>
+        Mon Profil
+      </div>
+
+      <div class="nav-section-label">Compte</div>
+
+      <div class="nav-item" id="logout-btn">
+        <span class="nav-icon"><i data-lucide="log-out"></i></span>
+        Déconnexion
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="mandate-progress">
+        <div class="mp-label">
+          <span id="mandate-label">Mandat</span>
+          <span id="mandate-remaining">–</span>
+        </div>
+        <div class="progress-bar-outer">
+          <div class="progress-bar-inner" id="mandate-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN WRAPPER ===== -->
+  <div class="main-wrapper">
+
+    <!-- HEADER -->
+    <header class="top-header">
+      <button class="menu-toggle" id="menu-toggle"><i data-lucide="menu"></i></button>
+
+      <h1 class="header-title" id="page-title">
+        Tableau de bord
+      </h1>
+
+      <div class="search-bar">
+        <i data-lucide="search"></i>
+        <input type="text" id="global-search" placeholder="Rechercher…">
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="theme-toggle" title="Mode sombre/clair"><i data-lucide="moon"></i></button>
+        <button class="icon-btn" id="notif-btn" title="Notifications">
+          <i data-lucide="bell"></i>
+          <span class="badge" id="notif-badge">3</span>
+        </button>
+        <div class="header-avatar" id="header-avatar" onclick="navigateTo('profile')">EV</div>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <main class="page-content">
+
+      <!-- ============================
+           PAGE: DASHBOARD
+           ============================ -->
+      <div class="page active" id="page-dashboard">
+
+        <!-- Alert Banner (admin seulement) -->
+        <div class="alert-banner admin-only" id="alert-banner" style="display:none">
+          <span class="alert-icon"><i data-lucide="alert-triangle"></i></span>
+          <span class="alert-text" id="alert-text">—</span>
+          <button class="alert-close" id="alert-close"><i data-lucide="x"></i></button>
+        </div>
+
+        <!-- News Ticker -->
+        <div class="news-ticker">
+          <div class="ticker-label"><span class="live-dot"></span> LIVE</div>
+          <div class="ticker-content">
+            <div class="ticker-scroll" id="ticker-scroll">
+              Les actualités de l'association apparaîtront ici
+            </div>
+          </div>
+        </div>
+
+        <!-- Welcome Banner -->
+        <div class="welcome-banner">
+          <div class="wb-text">
+            <h2>Bonjour, <span id="welcome-name">Membre</span> ! 👋</h2>
+            <p id="welcome-role">Membre — Association Éduquer Vos Cœurs</p>
+            <p style="font-size:13px;opacity:0.7;margin-top:6px" id="welcome-date">Aujourd'hui</p>
+          </div>
+          <div class="wb-actions">
+            <button class="wb-btn wb-btn-primary" onclick="navigateTo('events')"><i data-lucide="calendar"></i> Voir les événements</button>
+            <button class="wb-btn wb-btn-secondary" onclick="navigateTo('news')"><i data-lucide="newspaper"></i> Actualités</button>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid-4 mb-24">
+          <div class="stat-card" onclick="navigateTo('events')">
+            <div class="stat-icon icon-bg-secondary"><i data-lucide="calendar"></i></div>
+            <div class="stat-info">
+              <div class="stat-value" style="color:var(--secondary)" id="stat-events">–</div>
+              <div class="stat-label">Événements</div>
+            </div>
+          </div>
+          <div class="stat-card" onclick="navigateTo('members')">
+            <div class="stat-icon icon-bg-primary"><i data-lucide="users"></i></div>
+            <div class="stat-info">
+              <div class="stat-value" style="color:var(--primary)" id="stat-members">–</div>
+              <div class="stat-label">Membres inscrits</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon icon-bg-accent"><i data-lucide="globe"></i></div>
+            <div class="stat-info">
+              <div class="stat-value" style="color:var(--accent)">3</div>
+              <div class="stat-label">Pays actifs</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon icon-bg-success"><i data-lucide="package"></i></div>
+            <div class="stat-info">
+              <div class="stat-value" style="color:var(--success)" id="stat-kits-card">0</div>
+              <div class="stat-label">Kits distribués</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions mb-24">
+          <div class="qa-item admin-only" data-page="events">
+            <span class="qa-icon"><i data-lucide="plus"></i></span>
+            <span class="qa-label">Nouvel événement</span>
+          </div>
+          <div class="qa-item admin-only" data-page="news">
+            <span class="qa-icon"><i data-lucide="megaphone"></i></span>
+            <span class="qa-label">Publier une actu</span>
+          </div>
+          <div class="qa-item admin-only" data-page="members">
+            <span class="qa-icon"><i data-lucide="user-plus"></i></span>
+            <span class="qa-label">Inviter un membre</span>
+          </div>
+          <div class="qa-item" data-page="documents">
+            <span class="qa-icon"><i data-lucide="folder-open"></i></span>
+            <span class="qa-label">Médiathèque</span>
+          </div>
+          <div class="qa-item" data-page="sections">
+            <span class="qa-icon"><i data-lucide="message-circle"></i></span>
+            <span class="qa-label">Mes sections</span>
+          </div>
+        </div>
+
+        <!-- Impact Counter -->
+        <div class="impact-counter mb-24">
+          <h3><i data-lucide="sparkles"></i> Notre Impact — Depuis notre création</h3>
+          <div class="impact-grid">
+            <div class="impact-stat">
+              <span class="icount" id="count-enfants">0</span>
+              <span class="ilabel">Enfants aidés</span>
+            </div>
+            <div class="impact-stat">
+              <span class="icount" id="count-benevoles">0</span>
+              <span class="ilabel">Bénévoles mobilisés</span>
+            </div>
+            <div class="impact-stat">
+              <span class="icount" id="count-evenements">0</span>
+              <span class="ilabel">Événements organisés</span>
+            </div>
+            <div class="impact-stat">
+              <span class="icount" id="count-kits">0</span>
+              <span class="ilabel">Kits distribués</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2-col: Mood + Poll -->
+        <div class="grid-2 mb-24">
+          <div class="mood-widget">
+            <h3><i data-lucide="heart-handshake"></i> Comment vous sentez-vous aujourd'hui ?</h3>
+            <p style="font-size:12px;color:var(--text-light);margin-bottom:14px">Section Santé Mentale — Check-in quotidien</p>
+            <div class="mood-options">
+              <button class="mood-btn"><span class="mood-emoji">😄</span><span class="mood-label">Super !</span></button>
+              <button class="mood-btn"><span class="mood-emoji">😊</span><span class="mood-label">Bien</span></button>
+              <button class="mood-btn"><span class="mood-emoji">😐</span><span class="mood-label">Neutre</span></button>
+              <button class="mood-btn"><span class="mood-emoji">😔</span><span class="mood-label">Difficile</span></button>
+              <button class="mood-btn"><span class="mood-emoji">😰</span><span class="mood-label">Épuisé(e)</span></button>
+            </div>
+          </div>
+
+          <div class="poll-widget">
+            <div class="card-header" style="margin-bottom:12px">
+              <h3><i data-lucide="check-square"></i> Sondage interne</h3>
+              <span class="pill pill-orange">Bientôt</span>
+            </div>
+            <div style="text-align:center;padding:24px 0;color:var(--text-muted);font-size:13px">
+              <div style="margin-bottom:8px"><i data-lucide="check-square" style="width:32px;height:32px;opacity:0.3"></i></div>
+              Les sondages seront disponibles dans la prochaine version.
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent news preview -->
+        <div class="card">
+          <div class="card-header">
+            <h3><i data-lucide="newspaper"></i> Dernières actualités</h3>
+            <span class="card-action" onclick="navigateTo('news')">Voir tout →</span>
+          </div>
+          <div id="news-preview">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+      </div><!-- /page-dashboard -->
+
+      <!-- ============================
+           PAGE: PLANNING
+           ============================ -->
+      <div class="page" id="page-planning">
+        <h2 class="section-title"><i data-lucide="calendar"></i> Planning & Calendrier</h2>
+        <p class="section-subtitle">Tous les événements et échéances de votre association</p>
+
+        <div class="grid-2" style="margin-bottom:24px;align-items:start">
+          <div>
+            <div class="calendar-wrap">
+              <div class="cal-header">
+                <h3 id="cal-month-label">Juin 2026</h3>
+                <div class="cal-nav">
+                  <button id="cal-prev">‹</button>
+                  <button id="cal-next">›</button>
+                </div>
+              </div>
+              <div class="cal-days-header">
+                <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div>
+                <div>Ven</div><div>Sam</div><div>Dim</div>
+              </div>
+              <div class="cal-grid" id="cal-grid"></div>
+            </div>
+
+            <div class="card mt-20">
+              <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px"><i data-lucide="map-pin" style="width:16px;height:16px"></i> Légende</h3>
+              <div style="display:flex;flex-wrap:wrap;gap:10px">
+                <span class="meta-tag"><span style="width:10px;height:10px;background:#17a589;border-radius:3px;display:inline-block"></span> Don & Distribution</span>
+                <span class="meta-tag"><span style="width:10px;height:10px;background:#e74c3c;border-radius:3px;display:inline-block"></span> Réunions CDI</span>
+                <span class="meta-tag"><span style="width:10px;height:10px;background:#8e44ad;border-radius:3px;display:inline-block"></span> Santé Mentale</span>
+                <span class="meta-tag"><span style="width:10px;height:10px;background:#e8a020;border-radius:3px;display:inline-block"></span> Événementiel</span>
+                <span class="meta-tag"><span style="width:10px;height:10px;background:#2980b9;border-radius:3px;display:inline-block"></span> Formation</span>
+                <span class="meta-tag"><span style="width:10px;height:10px;background:#1e3d59;border-radius:3px;display:inline-block"></span> International</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <h3><i data-lucide="clipboard-list"></i> Prochains événements</h3>
+                <span class="pill pill-teal">Juin–Août 2026</span>
+              </div>
+              <div id="planning-events-list">
+                <div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px">
+                  <i data-lucide="calendar" style="width:32px;height:32px;opacity:0.3;margin-bottom:8px;display:block;margin-inline:auto"></i>
+                  Aucun événement pour le moment.<br>Les événements ajoutés apparaîtront ici.
+                </div>
+              </div>
+              <button class="btn btn-secondary w-full mt-16 admin-only" onclick="navigateTo('events')">
+                <i data-lucide="plus"></i> Ajouter un événement
+              </button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /page-planning -->
+
+      <!-- ============================
+           PAGE: EVENTS
+           ============================ -->
+      <div class="page" id="page-events">
+        <h2 class="section-title"><i data-lucide="ticket"></i> Événements</h2>
+        <p class="section-subtitle">Événements en cours, à venir et passés de l'association</p>
+
+        <div class="filter-bar">
+          <button class="filter-chip active" data-filter="all">Tous</button>
+          <button class="filter-chip" data-filter="ongoing">En cours</button>
+          <button class="filter-chip" data-filter="upcoming">À venir</button>
+          <button class="filter-chip" data-filter="Burkina Faso">Burkina Faso</button>
+          <button class="filter-chip" data-filter="Côte d'Ivoire">Côte d'Ivoire</button>
+          <button class="filter-chip" data-filter="Niger">Niger</button>
+          <button class="filter-chip" data-filter="International">International</button>
+        </div>
+
+        <div class="grid-3" id="events-grid">
+          <!-- filled by JS -->
+        </div>
+      </div><!-- /page-events -->
+
+      <!-- ============================
+           PAGE: NEWS
+           ============================ -->
+      <div class="page" id="page-news">
+        <h2 class="section-title"><i data-lucide="newspaper"></i> Actualités & Annonces</h2>
+        <p class="section-subtitle">Toutes les nouvelles de l'association — Publications de la direction, des sections et des délégués</p>
+
+        <!-- Publish form (admin seulement) -->
+        <div class="card mb-24 admin-only">
+          <div class="card-header">
+            <h3><i data-lucide="pencil"></i> Publier une actualité</h3>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <input type="text" id="news-title" placeholder="Titre de l'annonce…" style="padding:10px 14px;border:2px solid var(--border);border-radius:8px;width:100%;font-size:14px;font-family:inherit;outline:none;color:var(--text);background:var(--card)">
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <textarea id="news-content-input" placeholder="Contenu de votre actualité…" rows="3" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;resize:vertical;color:var(--text);background:var(--card)"></textarea>
+          </div>
+          <div style="margin-bottom:12px">
+            <select id="news-tag-select" style="padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;outline:none;color:var(--text);background:var(--card);cursor:pointer">
+              <option value="general">Général</option>
+              <option value="event">Événement</option>
+              <option value="urgent">Urgent</option>
+              <option value="finance">Finance</option>
+              <option value="info">Info</option>
+            </select>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('news-title').value='';document.getElementById('news-content-input').value=''">Annuler</button>
+            <button class="btn btn-primary btn-sm" id="news-submit">Publier <i data-lucide="send"></i></button>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <button class="filter-chip active" data-filter="all">Toutes</button>
+          <button class="filter-chip" data-filter="urgent">Urgentes</button>
+          <button class="filter-chip" data-filter="event">Événements</button>
+          <button class="filter-chip" data-filter="finance">Finance</button>
+          <button class="filter-chip" data-filter="general">Générales</button>
+        </div>
+
+        <div id="news-feed">
+          <!-- filled by JS -->
+        </div>
+      </div><!-- /page-news -->
+
+      <!-- ============================
+           PAGE: SECTIONS
+           ============================ -->
+      <div class="page" id="page-sections">
+        <h2 class="section-title"><i data-lucide="layout-grid"></i> Mes Sections & Branches</h2>
+        <p class="section-subtitle">Les 7 sections thématiques de l'association et leur état dans chaque pays</p>
+
+        <!-- Country map -->
+        <div class="world-map-wrap mb-24">
+          <div class="card-header">
+            <h3><i data-lucide="globe"></i> Présence Internationale</h3>
+            <div style="display:flex;gap:8px">
+              <span class="pill pill-green">3 Actifs</span>
+              <span class="pill pill-orange">5 Extensions</span>
+              <span class="pill pill-blue">1 Partenaire</span>
+            </div>
+          </div>
+          <div class="country-grid" id="country-grid">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- Sections grid -->
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:16px">Les 7 Sections de l'Association</h3>
+        <div class="grid-3" id="sections-grid" style="margin-bottom:24px">
+          <!-- filled by JS -->
+        </div>
+
+        <!-- Section messaging placeholder -->
+        <div class="card">
+          <div class="card-header">
+            <h3><i data-lucide="message-circle"></i> Messagerie Inter-Sections</h3>
+            <span class="pill pill-orange">Bientôt</span>
+          </div>
+          <div style="text-align:center;padding:32px;color:var(--text-muted)">
+            <div class="msg-placeholder-icon"><i data-lucide="message-square"></i></div>
+            <p style="font-size:14px">La messagerie en temps réel entre sections sera disponible dans la prochaine version.</p>
+            <button class="btn btn-secondary btn-sm mt-16" onclick="showToast('Vous serez notifié dès l\'activation !','info')">Me notifier au lancement</button>
+          </div>
+        </div>
+      </div><!-- /page-sections -->
+
+      <!-- ============================
+           PAGE: DOCUMENTS
+           ============================ -->
+      <div class="page" id="page-documents">
+        <h2 class="section-title"><i data-lucide="folder-open"></i> Médiathèque</h2>
+        <p class="section-subtitle">Documents, rapports, ressources pédagogiques et kits de communication</p>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:16px;flex-wrap:wrap">
+          <div class="search-bar" style="width:280px;display:flex">
+            <i data-lucide="search"></i>
+            <input type="text" placeholder="Rechercher un document…" oninput="filterDocs(this.value)">
+          </div>
+          <input type="file" id="file-input" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.png,.jpg,.jpeg">
+          <button class="btn btn-primary btn-sm admin-only" id="upload-btn">
+            <i data-lucide="upload"></i> Déposer un fichier
+          </button>
+        </div>
+
+        <div class="filter-bar">
+          <button class="filter-chip active" data-filter="all">Tous</button>
+          <button class="filter-chip" data-filter="Direction">Direction</button>
+          <button class="filter-chip" data-filter="Finance">Finance</button>
+          <button class="filter-chip" data-filter="Communication">Communication</button>
+          <button class="filter-chip" data-filter="Formation">Formation</button>
+          <button class="filter-chip" data-filter="Bénévolat">Bénévolat</button>
+        </div>
+
+        <div id="docs-list">
+          <!-- filled by JS -->
+        </div>
+      </div><!-- /page-documents -->
+
+      <!-- ============================
+           PAGE: MEMBERS
+           ============================ -->
+      <div class="page" id="page-members">
+        <h2 class="section-title"><i data-lucide="users"></i> Annuaire des Membres</h2>
+        <p class="section-subtitle">Tous les membres actifs de l'association — bénévoles, formateurs et responsables</p>
+
+        <div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+          <div class="search-bar" style="width:280px;display:flex">
+            <i data-lucide="search"></i>
+            <input type="text" placeholder="Rechercher un membre…">
+          </div>
+          <div class="filter-bar" style="margin-bottom:0">
+            <button class="filter-chip active">Tous</button>
+            <button class="filter-chip" onclick="showToast('Filtre Bénévoles','info')">Bénévoles</button>
+            <button class="filter-chip" onclick="showToast('Filtre Formateurs','info')">Formateurs</button>
+            <button class="filter-chip" onclick="showToast('Filtre RS','info')">Responsables</button>
+          </div>
+        </div>
+
+        <div class="grid-4" id="members-grid">
+          <!-- filled by JS -->
+        </div>
+
+        <div class="card mt-24 admin-only">
+          <div class="card-header">
+            <h3><i data-lucide="user-plus"></i> Inviter un nouveau membre</h3>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <input type="email" placeholder="email@exemple.com" style="flex:1;min-width:220px;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;outline:none;color:var(--text);background:var(--card)">
+            <button class="btn btn-primary" id="invite-btn">Envoyer l'invitation</button>
+          </div>
+        </div>
+      </div><!-- /page-members -->
+
+      <!-- ============================
+           PAGE: PROFILE
+           ============================ -->
+      <div class="page" id="page-profile">
+
+        <!-- Profile Hero -->
+        <div class="profile-hero mb-24">
+          <div class="profile-avatar-lg" id="profile-initials">EV</div>
+          <div class="ph-info">
+            <h2 id="profile-name">Chargement…</h2>
+            <p id="profile-role">Membre</p>
+            <div class="profile-tags">
+              <span class="profile-tag" id="profile-country">Burkina Faso</span>
+              <span class="profile-tag"><i data-lucide="heart"></i> Membre actif</span>
+              <span class="profile-tag"><i data-lucide="check-circle"></i> Mandat en cours</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-24">
+          <!-- Mandate progress -->
+          <div class="card">
+            <div class="card-header"><h3><i data-lucide="clock"></i> Progression du mandat</h3></div>
+            <div style="text-align:center;padding:12px 0">
+              <div style="font-size:48px;font-weight:900;color:var(--secondary)" id="profile-mandate-pct">0%</div>
+              <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px" id="profile-mandate-days">Calcul…</div>
+              <div class="progress-bar-outer" style="height:12px;border-radius:6px">
+                <div class="progress-bar-inner" id="profile-mandate-bar" style="width:0%;height:100%"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:8px">
+                <span>Début de mandat</span>
+                <span>Fin de mandat</span>
+              </div>
+            </div>
+            <hr class="divider">
+            <button class="btn btn-secondary w-full" onclick="showToast('Demande de renouvellement envoyée !','success')">
+              <i data-lucide="refresh-cw"></i> Demander un renouvellement
+            </button>
+          </div>
+
+          <!-- Stats perso -->
+          <div class="card">
+            <div class="card-header"><h3><i data-lucide="bar-chart-2"></i> Mes statistiques</h3></div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg);border-radius:8px">
+                <span style="font-size:13px;color:var(--text-light)">Événements participés</span>
+                <span style="font-weight:800;color:var(--secondary)">4</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg);border-radius:8px">
+                <span style="font-size:13px;color:var(--text-light)">Heures de bénévolat</span>
+                <span style="font-weight:800;color:var(--accent)">47h</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg);border-radius:8px">
+                <span style="font-size:13px;color:var(--text-light)">Publications</span>
+                <span style="font-weight:800;color:var(--primary)">2</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg);border-radius:8px">
+                <span style="font-size:13px;color:var(--text-light)">Score d'impact</span>
+                <span style="font-weight:800;color:var(--success)">782 pts</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg);border-radius:8px">
+                <span style="font-size:13px;color:var(--text-light)">Rang associatif</span>
+                <span style="font-weight:800;color:#8e44ad">Contributeur</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="card mb-24">
+          <div class="card-header">
+            <h3><i data-lucide="award"></i> Mes Badges & Récompenses</h3>
+            <span class="pill pill-orange">5/12 obtenus</span>
+          </div>
+          <div class="achievements-grid">
+            <div class="achievement">
+              <span class="ach-icon"><i data-lucide="leaf"></i></span>
+              <div class="ach-name">Premier pas</div>
+              <div class="ach-desc">Membre depuis 30j</div>
+            </div>
+            <div class="achievement">
+              <span class="ach-icon"><i data-lucide="calendar-check"></i></span>
+              <div class="ach-name">Organisateur</div>
+              <div class="ach-desc">1 événement participé</div>
+            </div>
+            <div class="achievement">
+              <span class="ach-icon"><i data-lucide="file-text"></i></span>
+              <div class="ach-name">Rédacteur</div>
+              <div class="ach-desc">1ère publication</div>
+            </div>
+            <div class="achievement">
+              <span class="ach-icon"><i data-lucide="globe"></i></span>
+              <div class="ach-name">Citoyen du monde</div>
+              <div class="ach-desc">Membre international</div>
+            </div>
+            <div class="achievement">
+              <span class="ach-icon"><i data-lucide="heart"></i></span>
+              <div class="ach-name">Cœur généreux</div>
+              <div class="ach-desc">50h de bénévolat</div>
+            </div>
+            <div class="achievement locked">
+              <span class="ach-icon"><i data-lucide="flame"></i></span>
+              <div class="ach-name">Super Bénévole</div>
+              <div class="ach-desc">100h de bénévolat</div>
+            </div>
+            <div class="achievement locked">
+              <span class="ach-icon"><i data-lucide="shield"></i></span>
+              <div class="ach-name">Leader</div>
+              <div class="ach-desc">Devenir Responsable</div>
+            </div>
+            <div class="achievement locked">
+              <span class="ach-icon"><i data-lucide="star"></i></span>
+              <div class="ach-name">Ambassadeur</div>
+              <div class="ach-desc">Contrat influenceur</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="card">
+          <div class="card-header"><h3><i data-lucide="settings"></i> Paramètres du compte</h3></div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg);border-radius:8px">
+              <div>
+                <div style="font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px"><i data-lucide="moon" style="width:16px;height:16px"></i> Mode sombre</div>
+                <div style="font-size:12px;color:var(--text-muted)">Changer l'apparence de l'interface</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="toggleTheme()">Activer/Désactiver</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg);border-radius:8px">
+              <div>
+                <div style="font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px"><i data-lucide="bell" style="width:16px;height:16px"></i> Notifications</div>
+                <div style="font-size:12px;color:var(--text-muted)">Gérer vos préférences de notification</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="showToast('Préférences de notification sauvegardées !','success')">Configurer</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg);border-radius:8px">
+              <div>
+                <div style="font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px"><i data-lucide="key" style="width:16px;height:16px"></i> Changer le mot de passe</div>
+                <div style="font-size:12px;color:var(--text-muted)">Dernière modification : jamais</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="showToast('Email de réinitialisation envoyé !','info')">Modifier</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg);border-radius:8px">
+              <div>
+                <div style="font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px"><i data-lucide="file-text" style="width:16px;height:16px"></i> Télécharger mon attestation</div>
+                <div style="font-size:12px;color:var(--text-muted)">Attestation de bénévolat officielle</div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="showToast('Attestation générée et téléchargée !','success')"><i data-lucide="download"></i> Télécharger</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /page-profile -->
+
+    </main>
+  </div><!-- /main-wrapper -->
+
+  <!-- NOTIFICATIONS PANEL -->
+  <div class="notif-panel" id="notif-panel">
+    <div class="notif-panel-header">
+      <h3><i data-lucide="bell"></i> Notifications</h3>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-xs btn-secondary" onclick="markAllRead()">Tout lire</button>
+        <button class="icon-btn" id="notif-close"><i data-lucide="x"></i></button>
+      </div>
+    </div>
+    <div class="notif-list" id="notif-list">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="app.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.lucide) lucide.createIcons();
+  });
+</script>
+</body>
+</html>
