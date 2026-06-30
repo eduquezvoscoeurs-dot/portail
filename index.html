@@ -14,6 +14,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+  <script src="logos.js"></script>
 </head>
 <body>
 
@@ -87,6 +88,17 @@
             <input type="password" id="register-password" placeholder="Min. 6 caractères" required minlength="6">
           </div>
         </div>
+        <div class="form-group">
+          <label>Je rejoins l'association en tant que…</label>
+          <div class="radio-pill-group">
+            <div class="radio-pill selected" data-mandate="Bénévole" onclick="selectMandateType(this)">
+              Bénévole<small>Mandat 3 mois</small>
+            </div>
+            <div class="radio-pill" data-mandate="Formateur" onclick="selectMandateType(this)">
+              Formateur<small>Mandat 6 mois</small>
+            </div>
+          </div>
+        </div>
         <button type="submit" id="register-btn" class="btn btn-primary">
           Créer mon compte →
         </button>
@@ -150,12 +162,21 @@
         Actualités
         <span class="nav-badge">6</span>
       </div>
+      <div class="nav-item" data-page="videos">
+        <span class="nav-icon"><i data-lucide="video"></i></span>
+        Vidéos
+        <span class="nav-badge" id="nav-badge-videos" style="display:none">0</span>
+      </div>
 
       <div class="nav-section-label">Mon Espace</div>
 
       <div class="nav-item" data-page="sections">
         <span class="nav-icon"><i data-lucide="layout-grid"></i></span>
         Mes Sections
+      </div>
+      <div class="nav-item" data-page="about">
+        <span class="nav-icon"><i data-lucide="building-2"></i></span>
+        À propos & Organisation
       </div>
       <div class="nav-item" data-page="documents">
         <span class="nav-icon"><i data-lucide="folder"></i></span>
@@ -361,12 +382,23 @@
         </div>
 
         <!-- Recent news preview -->
-        <div class="card">
+        <div class="card mb-24">
           <div class="card-header">
             <h3><i data-lucide="newspaper"></i> Dernières actualités</h3>
             <span class="card-action" onclick="navigateTo('news')">Voir tout →</span>
           </div>
           <div id="news-preview">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- Recent videos preview -->
+        <div class="card">
+          <div class="card-header">
+            <h3><i data-lucide="video"></i> Nouvelles vidéos sur nos pages</h3>
+            <span class="card-action" onclick="navigateTo('videos')">Voir tout →</span>
+          </div>
+          <div class="grid-3" id="videos-preview" style="gap:14px">
             <!-- filled by JS -->
           </div>
         </div>
@@ -499,6 +531,41 @@
       </div><!-- /page-news -->
 
       <!-- ============================
+           PAGE: VIDÉOS
+           ============================ -->
+      <div class="page" id="page-videos">
+        <h2 class="section-title"><i data-lucide="video"></i> Vidéos de l'association</h2>
+        <p class="section-subtitle">Toutes les vidéos publiées sur les pages officielles d'Éduquer Vos Cœurs — reportages, événements, témoignages</p>
+
+        <!-- Publish form (admin seulement) -->
+        <div class="card mb-24 admin-only">
+          <div class="card-header">
+            <h3><i data-lucide="film"></i> Annoncer une nouvelle vidéo</h3>
+          </div>
+          <div class="form-row">
+            <label>Titre de la vidéo</label>
+            <input type="text" id="video-title" placeholder="Ex. Distribution de kits scolaires — Burkina Faso">
+          </div>
+          <div class="form-row">
+            <label>Lien YouTube</label>
+            <input type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=…">
+          </div>
+          <div class="form-row">
+            <label>Description (optionnel)</label>
+            <textarea id="video-desc" rows="2" placeholder="Quelques mots sur cette vidéo…"></textarea>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('video-title').value='';document.getElementById('video-url').value='';document.getElementById('video-desc').value=''">Annuler</button>
+            <button class="btn btn-primary btn-sm" id="video-submit">Publier <i data-lucide="send"></i></button>
+          </div>
+        </div>
+
+        <div class="grid-3" id="videos-grid">
+          <!-- filled by JS -->
+        </div>
+      </div><!-- /page-videos -->
+
+      <!-- ============================
            PAGE: SECTIONS
            ============================ -->
       <div class="page" id="page-sections">
@@ -541,11 +608,142 @@
       </div><!-- /page-sections -->
 
       <!-- ============================
+           PAGE: À PROPOS & ORGANISATION
+           ============================ -->
+      <div class="page" id="page-about">
+
+        <div class="about-hero">
+          <h2>Éduquer Vos Cœurs</h2>
+          <p>Association Humanitaire Internationale — Éduquer au Cœur aspire à un monde où chaque enfant, orphelin ou personne vulnérable a accès à l'éducation, à la santé mentale et aux ressources essentielles pour s'épanouir pleinement, quelle que soit sa situation géographique ou sociale.</p>
+          <div class="about-meta-row">
+            <span class="about-meta-chip"><i data-lucide="calendar"></i> Créée en 2024</span>
+            <span class="about-meta-chip"><i data-lucide="map-pin"></i> Siège : Burkina Faso</span>
+            <span class="about-meta-chip"><i data-lucide="globe-2"></i> Active : BF · CI · Niger</span>
+            <span class="about-meta-chip"><i data-lucide="handshake"></i> Partenariat : Chine (matériels)</span>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-24">
+          <div class="card">
+            <div class="card-header"><h3><i data-lucide="eye"></i> Notre mission</h3></div>
+            <p style="font-size:13px;color:var(--text-light);line-height:1.7;margin-bottom:10px">Fédérer des bénévoles, des formateurs, des influenceurs et des partenaires à travers le monde pour :</p>
+            <ul style="font-size:13px;color:var(--text);line-height:1.9;padding-left:18px">
+              <li>Distribuer des matériels éducatifs et de première nécessité aux orphelins et personnes dans le besoin.</li>
+              <li>Offrir un accompagnement en santé mentale adapté aux réalités locales.</li>
+              <li>Organiser des événements de sensibilisation et de collecte de fonds.</li>
+              <li>Former des acteurs locaux capables de pérenniser les actions de l'association.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3><i data-lucide="building-2"></i> Gouvernance</h3></div>
+            <p style="font-size:13px;color:var(--text-light);line-height:1.7">L'association est dirigée par une <strong style="color:var(--text)">Présidence Générale</strong> (fondatrice), appuyée d'un <strong style="color:var(--text)">Comité Directeur International</strong>, garant de la cohérence stratégique entre tous les pays membres. Chaque pays dispose d'un <strong style="color:var(--text)">Délégué National</strong> qui coordonne toutes les sections locales et rend compte à la direction générale. Chaque section, dans chaque pays, est dirigée par un <strong style="color:var(--text)">Responsable de Section (RS)</strong>.</p>
+          </div>
+        </div>
+
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:14px">Nos valeurs fondatrices</h3>
+        <div class="value-grid mb-24">
+          <div class="value-card"><h4>Bienveillance</h4><p>Chaque action est guidée par l'empathie et le respect de la dignité humaine.</p></div>
+          <div class="value-card"><h4>Intégrité</h4><p>Transparence totale dans la gestion des fonds et des ressources.</p></div>
+          <div class="value-card"><h4>Inclusion</h4><p>Aucune discrimination de genre, d'origine, de religion ou de statut social.</p></div>
+          <div class="value-card"><h4>Excellence</h4><p>Qualité et rigueur dans toutes les actions menées.</p></div>
+          <div class="value-card"><h4>Solidarité</h4><p>Entraide entre toutes les sections, pays et membres de l'association.</p></div>
+        </div>
+
+        <div class="card mb-24">
+          <div class="card-header"><h3><i data-lucide="network"></i> Organigramme général</h3></div>
+          <div class="org-chart">
+            <div class="org-node top">PRÉSIDENCE GÉNÉRALE — Fondatrice</div>
+            <div class="org-connector"></div>
+            <div class="org-node">COMITÉ DIRECTEUR INTERNATIONAL</div>
+            <div class="org-connector"></div>
+            <div class="org-row">
+              <div class="org-node">🇧🇫 Délégué National — Burkina Faso</div>
+              <div class="org-node">🇨🇮 Délégué National — Côte d'Ivoire</div>
+              <div class="org-node">🇳🇪 Délégué National — Niger</div>
+            </div>
+            <div class="org-connector"></div>
+            <div class="org-node">7 SECTIONS PAR PAYS</div>
+            <div class="org-row" style="margin-top:4px">
+              <span class="meta-tag">Communication</span><span class="meta-tag">Santé Mentale</span><span class="meta-tag">Don</span>
+              <span class="meta-tag">Bénévolat</span><span class="meta-tag">Événementiel</span><span class="meta-tag">Finance</span><span class="meta-tag">Formation</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-24">
+          <div class="card">
+            <div class="card-header"><h3><i data-lucide="hourglass"></i> Cycle de vie d'un Bénévole — 3 mois</h3></div>
+            <table class="mandate-rules-table">
+              <tr><th>Phase</th><th>Période</th></tr>
+              <tr><td>Recrutement</td><td>Avant le mandat</td></tr>
+              <tr><td>Intégration</td><td>Semaine 1</td></tr>
+              <tr><td>Mission active</td><td>Semaines 2–10</td></tr>
+              <tr><td>Bilan & renouvellement</td><td>Semaines 11–12</td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3><i data-lucide="hourglass"></i> Cycle de vie d'un Formateur — 6 mois</h3></div>
+            <table class="mandate-rules-table">
+              <tr><th>Phase</th><th>Période</th></tr>
+              <tr><td>Sélection</td><td>Avant le mandat</td></tr>
+              <tr><td>Formation intensive</td><td>Semaines 1–2</td></tr>
+              <tr><td>Animation</td><td>Mois 1–4</td></tr>
+              <tr><td>Transmission & certification</td><td>Mois 5–6</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="card mb-24">
+          <div class="card-header">
+            <h3><i data-lucide="globe"></i> Présence & extensions prévues</h3>
+            <span class="card-action" onclick="navigateTo('sections')">Voir les sections →</span>
+          </div>
+          <p style="font-size:13px;color:var(--text-light);margin-bottom:14px">Un partenaire établi en Chine permet à l'association de sourcer et d'acheminer des matériels (fournitures scolaires, kits hygiène, vêtements) à destination des orphelins et des personnes dans le besoin, en coordination avec le Délégué National du Burkina Faso et la Section Don.</p>
+          <div class="country-grid" id="about-country-grid"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3><i data-lucide="route"></i> Feuille de route — prochaines étapes</h3></div>
+          <div class="country-roadmap">
+            <div class="roadmap-item"><span class="roadmap-num">1</span><div><b>Formalisation légale</b><span>Dépôt des statuts officiels dans les pays actifs — Fondatrice + Délégués</span></div></div>
+            <div class="roadmap-item"><span class="roadmap-num">2</span><div><b>Nommer les Délégués</b><span>Confirmer les représentants au BF, CI et Niger — Fondatrice</span></div></div>
+            <div class="roadmap-item"><span class="roadmap-num">3</span><div><b>Lancer le recrutement</b><span>Ouvrir les candidatures bénévoles et formateurs — RS Bénévolat</span></div></div>
+            <div class="roadmap-item"><span class="roadmap-num">4</span><div><b>Structurer la communication</b><span>Comptes officiels, charte graphique, kit influenceurs — RS Communication</span></div></div>
+            <div class="roadmap-item"><span class="roadmap-num">5</span><div><b>Activer le partenariat Chine</b><span>Finaliser les modalités de livraison des matériels — Délégué BF + RS Don</span></div></div>
+            <div class="roadmap-item"><span class="roadmap-num">6</span><div><b>1er événement de lancement</b><span>Événement de sensibilisation dans les 3 pays actifs — RS Événementiel</span></div></div>
+            <div class="roadmap-item"><span class="roadmap-num">7</span><div><b>Préparer l'extension</b><span>Identifier les futurs Délégués (Maroc, Canada, France…) — Comité Directeur</span></div></div>
+            <div class="roadmap-item"><span class="roadmap-num">8</span><div><b>Suivi financier</b><span>Ouvrir un compte association, créer le tableau de bord — RS Finance</span></div></div>
+          </div>
+        </div>
+
+      </div><!-- /page-about -->
+
+      <!-- ============================
            PAGE: DOCUMENTS
            ============================ -->
       <div class="page" id="page-documents">
         <h2 class="section-title"><i data-lucide="folder-open"></i> Médiathèque</h2>
         <p class="section-subtitle">Documents, rapports, ressources pédagogiques et kits de communication</p>
+
+        <div class="card mb-24">
+          <div class="card-header"><h3><i data-lucide="bookmark"></i> Documents fondateurs</h3></div>
+          <div class="doc-item" onclick="telecharger('documents/Eduquer_au_Coeur_Document_Fondateur.docx','Document Fondateur — Éduquer au Cœur.docx')">
+            <div class="doc-icon" style="background:rgba(30,61,89,0.12);color:#1e3d59"><i data-lucide="file-text"></i></div>
+            <div class="doc-info">
+              <div class="doc-name">Document Fondateur — Vision, gouvernance & organigramme</div>
+              <div class="doc-meta">Direction • Document de référence</div>
+            </div>
+            <span class="doc-action"><i data-lucide="download"></i></span>
+          </div>
+          <div class="doc-item" onclick="telecharger('documents/Eduquer_au_Coeur_Organisation_Interne.docx','Organisation Interne des Sections — Éduquer au Cœur.docx')">
+            <div class="doc-icon" style="background:rgba(23,165,137,0.12);color:#17a589"><i data-lucide="file-text"></i></div>
+            <div class="doc-info">
+              <div class="doc-name">Organisation Interne des Sections — Départements & rôles</div>
+              <div class="doc-meta">Direction • Document de référence</div>
+            </div>
+            <span class="doc-action"><i data-lucide="download"></i></span>
+          </div>
+        </div>
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:16px;flex-wrap:wrap">
           <div class="search-bar" style="width:280px;display:flex">
@@ -776,6 +974,64 @@
     </div>
     <div class="notif-list" id="notif-list">
       <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- SECTION DETAIL MODAL -->
+  <div class="modal-overlay" id="section-detail-modal" onclick="if(event.target===this) fermerSectionDetail()">
+    <div class="modal-box">
+      <button class="modal-close" onclick="fermerSectionDetail()"><i data-lucide="x"></i></button>
+      <div class="modal-header">
+        <div id="sdm-logo"></div>
+        <div>
+          <h2 id="sdm-name"></h2>
+          <p id="sdm-baseline" class="modal-baseline"></p>
+        </div>
+      </div>
+      <h3 class="modal-subtitle"><i data-lucide="layout-grid"></i> Départements</h3>
+      <div id="sdm-departements" class="sdm-dept-list"></div>
+      <h3 class="modal-subtitle"><i data-lucide="git-branch"></i> Synergies avec les autres sections</h3>
+      <div id="sdm-synergies" class="sdm-syn-list"></div>
+    </div>
+  </div>
+
+  <!-- MEMBER EDIT MODAL (admin / présidente uniquement) -->
+  <div class="modal-overlay" id="member-edit-modal" onclick="if(event.target===this) fermerEditionMembre()">
+    <div class="modal-box" style="max-width:480px">
+      <button class="modal-close" onclick="fermerEditionMembre()"><i data-lucide="x"></i></button>
+      <div class="modal-header">
+        <div class="member-avatar" id="mem-edit-avatar" style="width:48px;height:48px;font-size:16px">??</div>
+        <div>
+          <h2 id="mem-edit-name">Membre</h2>
+          <p class="modal-baseline" id="mem-edit-email">–</p>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Statut / mandat</label>
+        <select id="mem-edit-mandatetype"></select>
+      </div>
+      <div class="form-row">
+        <label>Section</label>
+        <select id="mem-edit-section"></select>
+      </div>
+      <div class="form-row">
+        <label>Pays</label>
+        <select id="mem-edit-country"></select>
+      </div>
+      <div class="form-row" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="mem-edit-renew" style="width:auto">
+        <label style="margin:0" for="mem-edit-renew">Redémarrer le compteur de mandat à partir d'aujourd'hui</label>
+      </div>
+      <div class="form-row" style="display:flex;align-items:center;gap:8px" id="mem-edit-admin-row">
+        <input type="checkbox" id="mem-edit-isadmin" style="width:auto">
+        <label style="margin:0" for="mem-edit-isadmin">Accès administrateur (peut publier, modifier les infos et documents)</label>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
+        <button class="btn btn-secondary btn-sm" onclick="fermerEditionMembre()">Annuler</button>
+        <button class="btn btn-primary btn-sm" onclick="sauvegarderMembre()">Enregistrer <i data-lucide="check"></i></button>
+      </div>
     </div>
   </div>
 
