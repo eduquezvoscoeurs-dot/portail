@@ -1,0 +1,75 @@
+// =========================================
+// ÉDUQUER VOS CŒURS — Règles de sécurité Firestore
+// À coller dans Firebase Console > Firestore Database > Règles > Publier
+// =========================================
+//
+// Modèle d'accès :
+//  - Toute lecture/écriture nécessite un compte connecté (membre).
+//  - L'administration (publier des actus/vidéos, gérer les membres et
+//    documents) est réservée à ADMIN_EMAIL ci-dessous et à tout membre
+//    dont le champ users/{uid}.isAdmin vaut true (ex. la présidente,
+//    promue depuis l'Annuaire du portail).
+//  - Seul un administrateur peut accorder/retirer le droit isAdmin —
+//    un membre ne peut jamais se l'auto-attribuer.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function isSelf(uid) { return isSignedIn() && request.auth.uid == uid; }
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "eduquezvoscoeurs@gmail.com" ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true)
+      );
+    }
+
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isSelf(uid);
+      allow update: if isAdmin() ||
+        (isSelf(uid) && !('isAdmin' in request.resource.data.diff(resource.data).affectedKeys()));
+      allow delete: if isAdmin();
+    }
+
+    match /news/{id} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin() ||
+        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']));
+      allow delete: if isAdmin();
+    }
+
+    match /videos/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /events/{id} {
+      allow read: if isSignedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() ||
+        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants']));
+    }
+
+    match /documents/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.uploadedBy == request.auth.uid);
+    }
+
+    match /notifications/{id} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['unread']);
+      allow delete: if isAdmin();
+    }
+
+    match /stats/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}
