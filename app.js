@@ -130,6 +130,7 @@ let allEvents     = [];
 let allDocs       = [];
 let allVideos     = [];
 let allNews       = [];
+let editingNewsId = null;
 
 // =================== INIT ===================
 
@@ -412,6 +413,7 @@ function navigateTo(page) {
     documents:"Médiathèque", members:"Annuaire", profile:"Mon Profil" };
   document.getElementById("page-title").textContent = titres[page] || page;
   if (page === "videos") marquerVideosVues();
+  if (page !== "news" && editingNewsId) annulerEditionActualite();
   window.scrollTo(0, 0);
 }
 
@@ -447,6 +449,8 @@ function renderNewsFeed(news) {
           <div class="time">${time}${item.pinned ? " · Épinglé" : ""}</div>
         </div>
         <span class="news-tag tag-${item.tag||"general"}">${item.tagLabel||"Général"}</span>
+        <button class="reaction-btn admin-only" style="margin-left:8px" onclick="modifierActualite('${item.id}')" title="Modifier cette actualité"><i data-lucide="pencil" style="width:14px;height:14px"></i></button>
+        <button class="reaction-btn admin-only" onclick="supprimerActualite('${item.id}')" title="Supprimer cette actualité"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
       </div>
       <div class="news-content"><h4>${item.title}</h4><p>${item.content}</p></div>
       <div class="news-reactions">
@@ -500,17 +504,56 @@ async function publierActualite() {
   if (!titre || !contenu) { showToast("Remplissez le titre et le contenu.", "warning"); return; }
   const tagLabels = { general:"Général", event:"Événement", urgent:"Urgent", finance:"Finance", info:"Info" };
   try {
-    await db.collection("news").add({
-      author: currentUser.name, authorInitials: currentUser.initials, authorColor: currentUser.color,
-      title: titre, content: contenu, tag, tagLabel: tagLabels[tag]||"Général",
-      pinned: false, reactions: {},
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-    document.getElementById("news-title").value = "";
-    document.getElementById("news-content-input").value = "";
-    showToast("Actualité publiée avec succès !", "success");
+    if (editingNewsId) {
+      await db.collection("news").doc(editingNewsId).update({
+        title: titre, content: contenu, tag, tagLabel: tagLabels[tag]||"Général",
+      });
+      showToast("Actualité modifiée avec succès !", "success");
+    } else {
+      await db.collection("news").add({
+        author: currentUser.name, authorInitials: currentUser.initials, authorColor: currentUser.color,
+        title: titre, content: contenu, tag, tagLabel: tagLabels[tag]||"Général",
+        pinned: false, reactions: {},
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      showToast("Actualité publiée avec succès !", "success");
+    }
+    annulerEditionActualite();
     navigateTo("news");
   } catch (e) { showToast("Erreur lors de la publication.", "error"); }
+}
+
+function modifierActualite(id) {
+  if (!currentUser?.isAdmin) return;
+  const item = allNews.find(n => n.id === id);
+  if (!item) return;
+  editingNewsId = id;
+  document.getElementById("news-title").value = item.title || "";
+  document.getElementById("news-content-input").value = item.content || "";
+  document.getElementById("news-tag-select").value = item.tag || "general";
+  document.getElementById("news-form-title").innerHTML = '<i data-lucide="pencil"></i> Modifier l\'actualité';
+  document.getElementById("news-submit").innerHTML = 'Enregistrer <i data-lucide="check"></i>';
+  if (window.lucide) lucide.createIcons();
+  document.getElementById("news-form-card").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function annulerEditionActualite() {
+  editingNewsId = null;
+  document.getElementById("news-title").value = "";
+  document.getElementById("news-content-input").value = "";
+  document.getElementById("news-tag-select").value = "general";
+  document.getElementById("news-form-title").innerHTML = '<i data-lucide="pencil"></i> Publier une actualité';
+  document.getElementById("news-submit").innerHTML = 'Publier <i data-lucide="send"></i>';
+  if (window.lucide) lucide.createIcons();
+}
+
+async function supprimerActualite(id) {
+  if (!currentUser?.isAdmin) return;
+  if (!confirm("Supprimer définitivement cette actualité ?")) return;
+  try {
+    await db.collection("news").doc(id).delete();
+    showToast("Actualité supprimée.", "success");
+  } catch (e) { showToast("Erreur lors de la suppression.", "error"); }
 }
 
 // =================== TICKER (bandeau LIVE) ===================
@@ -582,6 +625,7 @@ function videoCardHTML(v, context) {
         <div class="video-meta">
           <span>${v.author || "Éduquer Vos Cœurs"}</span>
           <span>${time}</span>
+          ${context === "grid" ? `<button class="reaction-btn admin-only" style="padding:2px 6px" onclick="supprimerVideo('${v.id}')" title="Supprimer cette vidéo"><i data-lucide="trash-2" style="width:13px;height:13px"></i></button>` : ""}
         </div>
       </div>
     </div>`;
@@ -647,6 +691,15 @@ async function publierVideo() {
     showToast("Vidéo annoncée avec succès !", "success");
     navigateTo("videos");
   } catch (e) { showToast("Erreur lors de la publication.", "error"); console.error(e); }
+}
+
+async function supprimerVideo(id) {
+  if (!currentUser?.isAdmin) return;
+  if (!confirm("Supprimer définitivement cette vidéo ?")) return;
+  try {
+    await db.collection("videos").doc(id).delete();
+    showToast("Vidéo supprimée.", "success");
+  } catch (e) { showToast("Erreur lors de la suppression.", "error"); }
 }
 
 // =================== ÉVÉNEMENTS ===================
