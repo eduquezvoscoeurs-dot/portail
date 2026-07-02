@@ -151,7 +151,28 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   setupListeners();
+  populateRegisterSelects();
 });
+
+function populatePosteSelect(selectId, sectionName, selectedValue) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const sec = SECTIONS_DATA.find(s => s.name === sectionName);
+  const postes = ["Membre", ...(sec ? sec.departements.map(d => d.nom) : [])];
+  sel.innerHTML = postes.map(p => `<option value="${p}" ${p===selectedValue?"selected":""}>${p}</option>`).join("");
+}
+
+function populateRegisterSelects() {
+  const sectionSel = document.getElementById("register-section");
+  if (sectionSel) {
+    sectionSel.innerHTML = SECTIONS_DATA.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+    populatePosteSelect("register-poste", SECTIONS_DATA[0].name);
+  }
+  const countrySel = document.getElementById("register-country");
+  if (countrySel) {
+    countrySel.innerHTML = COUNTRIES.map(p => `<option value="${p.name}">${p.flag} ${p.name}</option>`).join("");
+  }
+}
 
 // Le compte ci-dessus (ADMIN_EMAIL) a toujours les droits d'administration.
 // Un second accès spécial (ex. la présidente) peut être accordé depuis
@@ -272,6 +293,9 @@ async function handleRegister(e) {
   const name     = document.getElementById("register-name").value.trim();
   const email    = document.getElementById("register-email").value.trim();
   const password = document.getElementById("register-password").value;
+  const section  = document.getElementById("register-section")?.value || "–";
+  const poste    = document.getElementById("register-poste")?.value || "Membre";
+  const country  = document.getElementById("register-country")?.value || "–";
   const btn      = document.getElementById("register-btn");
   if (!name) { showToast("Entrez votre nom complet.", "warning"); return; }
   btn.disabled = true; btn.textContent = "Création…";
@@ -282,7 +306,7 @@ async function handleRegister(e) {
     const color    = colors[Math.floor(Math.random() * colors.length)];
     await db.collection("users").doc(cred.user.uid).set({
       name, email, initials, color,
-      role: selectedMandateType, section: "–", country: "–",
+      role: selectedMandateType, section, poste, country,
       mandateType: selectedMandateType,
       mandateStart: new Date().toISOString().split("T")[0],
       mandateDays: MANDATE_TYPES[selectedMandateType] || 90,
@@ -376,11 +400,12 @@ function populateUserInfo() {
   document.getElementById("sidebar-avatar").textContent = currentUser.initials;
   document.getElementById("sidebar-avatar").style.background = currentUser.color;
   document.getElementById("header-avatar").textContent  = currentUser.initials;
+  const poste = currentUser.poste && currentUser.poste !== "Membre" ? ` (${currentUser.poste})` : "";
   document.getElementById("welcome-name").textContent   = currentUser.name.split(" ")[0];
-  document.getElementById("welcome-role").textContent   = `${currentUser.role} • ${currentUser.section} • ${currentUser.country}`;
+  document.getElementById("welcome-role").textContent   = `${currentUser.role} • ${currentUser.section}${poste} • ${currentUser.country}`;
   document.getElementById("welcome-date").textContent   = dateStr;
   document.getElementById("profile-name").textContent   = currentUser.name;
-  document.getElementById("profile-role").textContent   = `${currentUser.role} — ${currentUser.section}`;
+  document.getElementById("profile-role").textContent   = `${currentUser.role} — ${currentUser.section}${poste}`;
   document.getElementById("profile-initials").textContent = currentUser.initials;
   document.getElementById("profile-initials").style.background = currentUser.color;
   document.getElementById("profile-country").textContent = currentUser.country;
@@ -413,6 +438,7 @@ function navigateTo(page) {
     documents:"Médiathèque", members:"Annuaire", profile:"Mon Profil" };
   document.getElementById("page-title").textContent = titres[page] || page;
   if (page === "videos") marquerVideosVues();
+  if (page === "news") marquerNewsVues();
   if (page !== "news" && editingNewsId) annulerEditionActualite();
   window.scrollTo(0, 0);
 }
@@ -427,7 +453,23 @@ function listenToNews() {
       renderNewsFeed(allNews);
       renderNewsPreview(allNews);
       renderTicker();
+      updateNewsBadge(allNews);
     }, err => console.error("News:", err));
+}
+
+function updateNewsBadge(news) {
+  const badge = document.getElementById("nav-badge-news");
+  if (!badge) return;
+  const seen = JSON.parse(localStorage.getItem("evc_news_seen") || "[]");
+  const nouvelles = news.filter(n => !seen.includes(n.id)).length;
+  badge.textContent = nouvelles;
+  badge.style.display = nouvelles > 0 ? "flex" : "none";
+}
+
+function marquerNewsVues() {
+  localStorage.setItem("evc_news_seen", JSON.stringify(allNews.map(n => n.id)));
+  const badge = document.getElementById("nav-badge-news");
+  if (badge) badge.style.display = "none";
 }
 
 function renderNewsFeed(news) {
@@ -439,6 +481,7 @@ function renderNewsFeed(news) {
   }
   c.innerHTML = news.map(item => {
     const reactions = item.reactions || {};
+    const replies = item.replies || [];
     const time = item.createdAt?.toDate ? tempsRelatif(item.createdAt.toDate()) : "";
     return `
     <div class="news-item ${item.pinned ? "pinned" : ""}">
@@ -452,14 +495,28 @@ function renderNewsFeed(news) {
         <button class="reaction-btn admin-only" style="margin-left:8px" onclick="modifierActualite('${item.id}')" title="Modifier cette actualité"><i data-lucide="pencil" style="width:14px;height:14px"></i></button>
         <button class="reaction-btn admin-only" onclick="supprimerActualite('${item.id}')" title="Supprimer cette actualité"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
       </div>
-      <div class="news-content"><h4>${item.title}</h4><p>${item.content}</p></div>
+      <div class="news-content"><h4>${escapeHtml(item.title)}</h4><p>${escapeHtml(item.content)}</p></div>
       <div class="news-reactions">
         ${["👏","💚","🎉"].map(emoji => `
           <button class="reaction-btn ${reactions[currentUser?.uid]?.emoji===emoji?"active":""}" onclick="toggleReaction('${item.id}','${emoji}',this)">
             ${emoji} <span class="react-count">${compterReaction(reactions,emoji)}</span>
           </button>`).join("")}
-        <button class="reaction-btn" onclick="showToast('Répondre — bientôt disponible !','info')"><i data-lucide="message-circle" style="width:14px;height:14px"></i> Répondre</button>
+        <button class="reaction-btn" onclick="toggleReplyBox('${item.id}')"><i data-lucide="message-circle" style="width:14px;height:14px"></i> Répondre${replies.length ? ` (${replies.length})` : ""}</button>
         <button class="reaction-btn" onclick="showToast('Lien copié !','success')"><i data-lucide="share-2" style="width:14px;height:14px"></i> Partager</button>
+      </div>
+      <div class="news-replies" id="replies-${item.id}" style="display:none">
+        ${replies.length ? `<div class="news-reply-list">${replies.map(r => `
+          <div class="news-reply">
+            <div class="news-reply-avatar" style="background:${r.authorColor||"#17a589"}">${r.authorInitials||"?"}</div>
+            <div class="news-reply-body">
+              <span class="news-reply-author">${escapeHtml(r.author||"Membre")}</span>
+              <p>${escapeHtml(r.text)}</p>
+            </div>
+          </div>`).join("")}</div>` : ""}
+        <div class="news-reply-form">
+          <input type="text" id="reply-input-${item.id}" placeholder="Écrire une réponse…" onkeydown="if(event.key==='Enter') envoyerReponse('${item.id}')">
+          <button class="btn btn-sm btn-primary" onclick="envoyerReponse('${item.id}')"><i data-lucide="send"></i></button>
+        </div>
       </div>
     </div>`;
   }).join("");
@@ -495,6 +552,38 @@ async function toggleReaction(newsId, emoji, btn) {
   if (reactions[currentUser.uid]?.emoji === emoji) delete reactions[currentUser.uid];
   else reactions[currentUser.uid] = { emoji };
   await ref.update({ reactions });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str ?? "";
+  return div.innerHTML;
+}
+
+function toggleReplyBox(newsId) {
+  const box = document.getElementById(`replies-${newsId}`);
+  if (!box) return;
+  const wasOpen = box.style.display !== "none";
+  document.querySelectorAll(".news-replies").forEach(b => b.style.display = "none");
+  box.style.display = wasOpen ? "none" : "block";
+  if (!wasOpen) document.getElementById(`reply-input-${newsId}`)?.focus();
+}
+
+async function envoyerReponse(newsId) {
+  if (!currentUser) return;
+  const input = document.getElementById(`reply-input-${newsId}`);
+  const texte = input?.value.trim();
+  if (!texte) return;
+  const reply = {
+    author: currentUser.name, authorInitials: currentUser.initials, authorColor: currentUser.color,
+    text: texte, createdAt: new Date().toISOString(),
+  };
+  try {
+    await db.collection("news").doc(newsId).update({
+      replies: firebase.firestore.FieldValue.arrayUnion(reply),
+    });
+    if (input) input.value = "";
+  } catch (e) { showToast("Erreur lors de l'envoi de la réponse.", "error"); }
 }
 
 async function publierActualite() {
@@ -973,7 +1062,7 @@ function renderMembers(liste) {
         ${estAdmin ? `<span class="admin-badge" style="position:absolute;top:10px;right:10px"><i data-lucide="shield-check"></i> Admin</span>` : ""}
         <div class="member-avatar" style="background:${u.color||"#17a589"}">${u.initials||"?"}</div>
         <div class="member-name">${u.name||"Membre"}</div>
-        <div class="member-role">${u.role||"Bénévole"}</div>
+        <div class="member-role">${u.role||"Bénévole"}${u.poste && u.poste!=="Membre" ? ` — ${u.poste}` : ""}</div>
         <div class="member-country"><i data-lucide="map-pin" style="width:12px;height:12px"></i> ${u.country||"–"} • ${u.section||"–"}</div>
         <span class="member-mandate">${remaining>0
           ? `<i data-lucide="clock" style="width:12px;height:12px"></i> ${remaining}j de mandat`
@@ -1008,6 +1097,7 @@ function ouvrirEditionMembre(uid) {
   const sectionSel = document.getElementById("mem-edit-section");
   sectionSel.innerHTML = `<option value="–">–</option>` + SECTIONS_DATA.map(s =>
     `<option value="${s.name}" ${u.section===s.name?"selected":""}>${s.name}</option>`).join("");
+  populatePosteSelect("mem-edit-poste", u.section, u.poste);
 
   const countrySel = document.getElementById("mem-edit-country");
   countrySel.innerHTML = COUNTRIES.map(p =>
@@ -1033,12 +1123,13 @@ async function sauvegarderMembre() {
   if (!editingMemberId || !currentUser?.isAdmin) return;
   const mandateType = document.getElementById("mem-edit-mandatetype").value;
   const section      = document.getElementById("mem-edit-section").value;
+  const poste        = document.getElementById("mem-edit-poste").value;
   const country       = document.getElementById("mem-edit-country").value;
   const renew         = document.getElementById("mem-edit-renew").checked;
   const isAdmin        = document.getElementById("mem-edit-isadmin").checked;
 
   const updates = {
-    role: mandateType, mandateType, section, country,
+    role: mandateType, mandateType, section, poste, country,
     mandateDays: MANDATE_TYPES[mandateType] || 90,
     isAdmin,
   };

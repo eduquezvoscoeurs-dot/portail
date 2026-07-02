@@ -38,7 +38,7 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isAdmin();
       allow update: if isAdmin() ||
-        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']));
+        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions', 'replies']));
       allow delete: if isAdmin();
     }
 
