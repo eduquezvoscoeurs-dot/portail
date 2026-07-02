@@ -99,6 +99,18 @@
             </div>
           </div>
         </div>
+        <div class="form-group">
+          <label>Section que je rejoins</label>
+          <select id="register-section" class="no-icon" onchange="populatePosteSelect('register-poste', this.value)"></select>
+        </div>
+        <div class="form-group">
+          <label>Poste précis dans la section</label>
+          <select id="register-poste" class="no-icon"></select>
+        </div>
+        <div class="form-group">
+          <label>Pays</label>
+          <select id="register-country" class="no-icon"></select>
+        </div>
         <button type="submit" id="register-btn" class="btn btn-primary">
           Créer mon compte →
         </button>
@@ -160,7 +172,7 @@
       <div class="nav-item" data-page="news">
         <span class="nav-icon"><i data-lucide="newspaper"></i></span>
         Actualités
-        <span class="nav-badge">6</span>
+        <span class="nav-badge" id="nav-badge-news" style="display:none">0</span>
       </div>
       <div class="nav-item" data-page="videos">
         <span class="nav-icon"><i data-lucide="video"></i></span>
@@ -1013,7 +1025,11 @@
       </div>
       <div class="form-row">
         <label>Section</label>
-        <select id="mem-edit-section"></select>
+        <select id="mem-edit-section" onchange="populatePosteSelect('mem-edit-poste', this.value)"></select>
+      </div>
+      <div class="form-row">
+        <label>Poste précis dans la section</label>
+        <select id="mem-edit-poste"></select>
       </div>
       <div class="form-row">
         <label>Pays</label>

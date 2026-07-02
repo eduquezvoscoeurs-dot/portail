@@ -197,6 +197,8 @@ body {
   font-family: inherit;
 }
 
+.form-group select.no-icon { padding-left: 14px; }
+
 .form-group input:focus, .form-group select:focus {
   border-color: var(--secondary);
   box-shadow: 0 0 0 3px rgba(23,165,137,0.15);
@@ -880,6 +882,69 @@ body {
   border-color: var(--secondary);
   color: var(--secondary);
 }
+
+/* =========================================
+   RÉPONSES AUX ACTUALITÉS
+   ========================================= */
+.news-replies {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.news-reply-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.news-reply {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.news-reply-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.news-reply-body {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  flex: 1;
+}
+
+.news-reply-author { font-size: 12px; font-weight: 700; color: var(--text); display: block; margin-bottom: 2px; }
+.news-reply-body p { font-size: 13px; color: var(--text-light); line-height: 1.5; }
+
+.news-reply-form {
+  display: flex;
+  gap: 8px;
+}
+
+.news-reply-form input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  color: var(--text);
+  background: var(--card);
+}
+
+.news-reply-form input:focus { border-color: var(--secondary); }
+.news-reply-form button { border-radius: 50%; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.news-reply-form button svg { width: 14px; height: 14px; }
 
 /* =========================================
    CALENDAR
